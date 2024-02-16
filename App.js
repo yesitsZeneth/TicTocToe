@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 
 export default function App() {
   const [gameActive, setGameActive] = useState(true);
   const [currentPlayer, setCurrentPlayer] = useState("X");
   const [gameState, setGameState] = useState(["", "", "", "", "", "", "", "", ""]);
+  const [winner, setWinner] = useState("");
 
   const winningConditions = [
     [0, 1, 2],
@@ -17,29 +18,37 @@ export default function App() {
     [2, 4, 6]
   ];
 
+  useEffect(() => {
+    if (winner) {
+      setGameActive(false);
+    }
+  }, [winner]);
+
   const handleCellClick = (index) => {
-    if (!gameActive || gameState[index] !== "")
+    if (!gameActive || gameState[index] !== "") {
       return;
+    }
 
     const newGameState = [...gameState];
     newGameState[index] = currentPlayer;
+
     setGameState(newGameState);
+    setCurrentPlayer(currentPlayer === "X" ? "O" : "X");
 
     handleResultValidation(newGameState);
-    setCurrentPlayer(currentPlayer === "X" ? "O" : "X");
   }
 
   const handleResultValidation = (state) => {
     for (let i = 0; i <= 7; i++) {
       const [a, b, c] = winningConditions[i];
       if (state[a] && state[a] === state[b] && state[a] === state[c]) {
-        setGameActive(false);
+        setWinner(state[a]);
         return;
       }
     }
 
     if (!state.includes("")) {
-      setGameActive(false);
+      setWinner("draw");
     }
   }
 
@@ -47,6 +56,7 @@ export default function App() {
     setGameActive(true);
     setCurrentPlayer("X");
     setGameState(["", "", "", "", "", "", "", "", ""]);
+    setWinner("");
   }
 
   const renderCell = (index) => {
@@ -68,7 +78,15 @@ export default function App() {
           <View key={index}>{renderCell(index)}</View>
         ))}
       </View>
-      <Text style={styles.status}>{gameActive ? `${currentPlayer}'s turn` : (gameState.includes("") ? "Game in progress" : "Game ended")}</Text>
+      <Text style={styles.status}>
+        {gameActive
+          ? `${currentPlayer}'s turn`
+          : winner
+          ? winner === "draw"
+            ? "DRAW"
+            : `Player ${winner} wins!`
+           : ""}
+      </Text>
       <TouchableOpacity
         style={styles.restartButton}
         onPress={handleRestartGame}
@@ -121,4 +139,4 @@ const styles = StyleSheet.create({
   restartButtonText: {
     fontSize: 18,
   },
-});
+})
